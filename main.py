@@ -1,13 +1,14 @@
-from os.path import expanduser
-from time import strftime, time, gmtime
 from datetime import datetime
 from math import floor, log
+from os.path import expanduser
 from re import match as re_match, search as re_search
+from time import strftime, time, gmtime
 from typing import Callable
-import requests
-from mysql.connector import MySQLConnection
+
 from lxml import etree
+import mariadb
 import pywikibot as pwb
+import requests
 
 
 SITE = pwb.Site('wikidata', 'wikidata')
@@ -17,7 +18,7 @@ WIKIDATA_API_ENDPOINT = 'https://www.wikidata.org/w/api.php'
 DB_PARAMS = {
     'host' : 'wikidatawiki.analytics.db.svc.wikimedia.cloud',
     'database' : 'wikidatawiki_p',
-    'option_files' : f'{expanduser("~")}/replica.my.cnf'
+    'default_file' : f'{expanduser("~")}/replica.my.cnf'
 }
 
 DAY_LIMIT = None # int or None; days
@@ -36,10 +37,10 @@ DAY_LIMIT = None # int or None; days
 #### database management
 class WikidataReplica:
     def __init__(self) -> None:
-        self.replica = MySQLConnection(**DB_PARAMS)
-        self.cursor = self.replica.cursor()
+        self.replica = mariadb.connect(**DB_PARAMS)
+        self.cursor = self.replica.cursor(dictionary=True)
 
-    def __enter__(self):
+    def __enter__(self) -> mariadb.connection.cursor:
         return self.cursor
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -99,7 +100,7 @@ WHERE
   AND ct_tag_id=674""" # 674=mw-reverted
 
     query_result = query_mediawiki(sql)
-    rev_ids = [ elem[1] for elem in query_result ]
+    rev_ids = [ elem['rc_this_oldid'] for elem in query_result ]
     return rev_ids
 
 
@@ -130,9 +131,9 @@ WHERE
     for elem in query_result:
         if re_search(
             r'(wbmergeitems\-to|wbmergeitems\-from|wbcreateredirect)',
-            elem[2].decode('utf8')
+            elem['comment_text'].decode('utf8')
         ) is None:
-            rev_ids.append(elem[1])
+            rev_ids.append(elem['rc_this_oldid'])
     return rev_ids
 
 
@@ -173,13 +174,13 @@ def process_revision_subset(action:str, pattern:str, check_function:Callable) ->
     for i, elem in enumerate(query_result, start=1): # elem: tpl (rc_id, rev_id, qid, edit_summary)
         match = re_match(
             pattern,
-            elem[3].decode('utf8')
+            elem['comment_text'].decode('utf8')
         )
         if match is None: # cannot process
             continue
 
-        qid = elem[2].decode('utf8')
-        revision_id = elem[1]
+        qid = elem['rc_title'].decode('utf8')
+        revision_id = elem['rc_this_oldid']
         key = match.group(2) # language, project identifier, etc
         value = match.group(3) # modified value
 
