@@ -1,4 +1,6 @@
 from datetime import datetime
+import logging
+import logging.config
 from math import floor, log
 from os.path import expanduser
 from re import match as re_match, search as re_search
@@ -10,6 +12,9 @@ import mariadb
 import pywikibot as pwb
 import requests
 
+
+logging.config.fileConfig('logging.conf')
+LOG = logging.getLogger()
 
 SITE = pwb.Site('wikidata', 'wikidata')
 REPO = SITE.data_repository()
@@ -70,7 +75,7 @@ def patrol_revisions(rev_ids:list) -> None:
     try:
         patrols = SITE.patrol(revid=rev_ids) # "patrols" is a generator
     except pwb.exceptions.APIError as exception:
-        print(exception)
+        LOG.warning(exception)
         return
 
     done = 0
@@ -78,14 +83,14 @@ def patrol_revisions(rev_ids:list) -> None:
         try:
             try:
                 patrol = next(patrols)
-            except pwb.exceptions.Error as exception:
-                print(exception)
             except pwb.exceptions.APIError as exception:
-                print(exception)
+                LOG.warning(exception)
+            except pwb.exceptions.Error as exception:
+                LOG.warning(exception)
             else:
                 done += 1
-                print(f'({done:{digits}d}/{cnt:{digits}d}) Patrolled rc_id {patrol["rcid"]}' \
-                      f' of page {patrol["title"]} (ns{patrol["ns"]})')
+                LOG.info(f'({done:{digits}d}/{cnt:{digits}d}) Patrolled rc_id {patrol["rcid"]}' \
+                         f' of page {patrol["title"]} (ns{patrol["ns"]})')
         except StopIteration:
             break
 
@@ -110,7 +115,7 @@ WHERE
 def patrol_reverted_revisions() -> None:
     rev_ids = get_reverted_unpatrolled_revisions()
 
-    print(f'Found {len(rev_ids)} revisions to be patrolled')
+    LOG.info(f'Found {len(rev_ids)} revisions to be patrolled')
     patrol_revisions(rev_ids)
 
 
@@ -143,7 +148,7 @@ WHERE
 def patrol_revisions_redirected_items() -> None:
     rev_ids = get_revisions_in_redirected_items()
 
-    print(f'Found {len(rev_ids)} revisions to be patrolled')
+    LOG.info(f'Found {len(rev_ids)} revisions to be patrolled')
     patrol_revisions(rev_ids)
 
 
@@ -196,7 +201,7 @@ def process_revision_subset(action:str, pattern:str, check_function:Callable) ->
                 value = scrape_aliases_from_diff(diff)
 
         if check_function(qid=qid, key=key, value=value) is True:
-            print(
+            LOG.info(
                 f'{i}/{len(query_result)}',
                 qid,
                 key,
@@ -205,7 +210,7 @@ def process_revision_subset(action:str, pattern:str, check_function:Callable) ->
             )
         else:
             if i%100 == 0:
-                print(f'Progress: {i}/{len(query_result)}')
+                LOG.info(f'Progress: {i}/{len(query_result)}')
 
 
 #### helpers
@@ -308,14 +313,13 @@ def should_patrol_sitelink_removal(qid:str='', key:str='', value:str='') -> bool
         if not project_page.exists():
             return True
     except pwb.exceptions.InvalidTitleError:
-        print('Invalid title:', value)
+        LOG.warning('Invalid title:', value)
         return False
 
     try:
         connected_item = pwb.ItemPage.fromPage(project_page)
     except pwb.exceptions.NoPageError: # no item connected
-        #print(project_page)
-        #print(exception)
+        #LOG.warning(project_page, exception)
         return False
     else:
         #connected_item.get()
@@ -356,14 +360,14 @@ def should_patrol_sitelink_addition(qid:str='', key:str='', value:str='') -> boo
     try:
         connected_sitelink = item_page.sitelinks.get(key)
     except pwb.exceptions.NoUsernameError as exception:
-        print(exception)
+        LOG.warning(exception)
         return False
     else:
         try:
             if connected_sitelink is not None and str(connected_sitelink)[2:-2] != value:
                 return True # different sitelink meanwhile present
         except pwb.exceptions.NoUsernameError as exception:
-            print(exception)
+            LOG.warning(exception)
             return False
 
     ## second attempt: check which item is connected to the sitelink
@@ -377,16 +381,16 @@ def should_patrol_sitelink_addition(qid:str='', key:str='', value:str='') -> boo
         if not project_page.exists():
             return True # sitelink meanwhile deleted
     except pwb.exceptions.InvalidTitleError as exception:
-        print(value, exception)
+        LOG.warning(value, exception)
         return False
     except pwb.exceptions.UnsupportedPageError as exception:
-        print(value, exception)
+        LOG.warning(value, exception)
         return False
 
     try:
         connected_item = pwb.ItemPage.fromPage(project_page)
     except pwb.exceptions.NoPageError: # no item connected
-        #print(exception)
+        #LOG.warning(exception)
         return False
     else:
         if qid != connected_item.title(): # sitelink is meanwhile connected to another item
@@ -406,7 +410,7 @@ def should_patrol_label_removal(qid:str='', key:str='', value:str='') -> bool:
         if not item_page.exists():
             return False
     except ValueError:
-        print(qid, key, value)
+        LOG.warning(qid, key, value)
         return False
 
     if item_page.isRedirectPage():
