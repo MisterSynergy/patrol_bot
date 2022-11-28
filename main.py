@@ -3,7 +3,7 @@ from math import floor, log
 from os.path import expanduser
 from re import match as re_match, search as re_search
 from time import strftime, time, gmtime
-from typing import Callable
+from typing import Any, Callable, Optional
 
 from lxml import etree
 import mariadb
@@ -48,9 +48,12 @@ class WikidataReplica:
         self.replica.close()
 
 
-def query_mediawiki(query:str) -> dict:
+def query_mediawiki(query:str, params:Optional[tuple[Any]]=None) -> list[dict[str, Any]]:
     with WikidataReplica() as db_cursor:
-        db_cursor.execute(query)
+        if params is None:
+            db_cursor.execute(query)
+        else:
+            db_cursor.execute(query, params)
         result = db_cursor.fetchall()
 
     return result
@@ -145,7 +148,7 @@ def patrol_revisions_redirected_items() -> None:
 
 
 #### generic processors
-def query_revision_subset(action:str, limit=None) -> dict:
+def query_revision_subset(action:str, limit=None) -> list[dict[str, Any]]:
     if limit is None:
         query_limit = '\n'
     else:
