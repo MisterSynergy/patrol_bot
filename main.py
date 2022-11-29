@@ -201,13 +201,7 @@ def process_revision_subset(action:str, pattern:str, check_function:Callable) ->
                 value = scrape_aliases_from_diff(diff)
 
         if check_function(qid=qid, key=key, value=value) is True:
-            LOG.info(
-                f'{i}/{len(query_result)}',
-                qid,
-                key,
-                value,
-                next(SITE.patrol(revid=revision_id)) # process generator with one item
-            )
+            LOG.info(f'{i}/{len(query_result)}, {qid}, {key}, {value}, {next(SITE.patrol(revid=revision_id))}')  # process generator with one item
         else:
             if i%100 == 0:
                 LOG.info(f'Progress: {i}/{len(query_result)}')
