@@ -745,32 +745,6 @@ def patrol_sitelink_deletions() -> None:
 
 
 #### main
-def main_by_hour() -> None:
-    SITE.login()
-
-    jobs = {
-        0 : patrol_reverted_revisions,
-        1 : patrol_revisions_redirected_items,
-        2 : patrol_sitelink_additions,
-        5 : patrol_sitelink_removals,
-        6 : patrol_sitelink_deletions,
-        7 : patrol_label_additions,
-        10 : patrol_label_removals,
-        11 : patrol_label_modifications,
-        12 : patrol_description_additions,
-        15 : patrol_description_removals,
-        16 : patrol_description_modifications,
-        17 : patrol_alias_additions,
-        18 : patrol_alias_removals,
-        19 : patrol_alias_settings,
-        20 : patrol_alias_updates,
-    }
-
-    func = jobs.get(datetime.now().hour)
-    if func is not None:
-        func()
-
-
 def main() -> None:
     SITE.login()
 
@@ -791,10 +765,5 @@ def main() -> None:
     patrol_alias_updates()
 
 
-def main_testing() -> None:
-    pass
-
-
 if __name__=='__main__':
     main()
-
