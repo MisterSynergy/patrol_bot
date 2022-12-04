@@ -22,9 +22,16 @@ spec:
             workingDir: /data/project/msynbot/pywikibot_tasks/patrol_bot
             command: [ venv/bin/python3 ]
             args: [ main.py ]
+            resources:
+              requests:
+                memory: "200Mi"
+                cpu: "100m"
+              limits:
+                memory: "500Mi"
+                cpu: "100m"
             env:
             - name: HOME
               value: /data/project/msynbot
             - name: PYTHONPATH
               value: /data/project/shared/pywikibot/stable
-          restartPolicy: OnFailure
+          restartPolicy: Never
