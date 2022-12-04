@@ -179,7 +179,7 @@ WHERE
 def process_revision_subset(action:str, pattern:str, check_function:Callable) -> None:
     limit = DAY_LIMIT
     query_result = query_revision_subset(action, limit)
-    for i, elem in enumerate(query_result, start=1): # elem: tpl (rc_id, rev_id, qid, edit_summary)
+    for i, elem in enumerate(query_result, start=1): # elem: dict with keys rc_id, rc_this_oldid=rev_id, rc_title=qid, comment_text=edit_summary)
         match = re_match(
             pattern,
             elem['comment_text'].decode('utf8')
@@ -307,13 +307,13 @@ def should_patrol_sitelink_removal(qid:str='', key:str='', value:str='') -> bool
         if not project_page.exists():
             return True
     except pwb.exceptions.InvalidTitleError:
-        LOG.warning('Invalid title:', value)
+        LOG.warning(f'Invalid title: {value}')
         return False
 
     try:
         connected_item = pwb.ItemPage.fromPage(project_page)
     except pwb.exceptions.NoPageError: # no item connected
-        #LOG.warning(project_page, exception)
+        #LOG.warning(f'{project_page.title()}: {exception}')
         return False
     else:
         #connected_item.get()
@@ -375,10 +375,10 @@ def should_patrol_sitelink_addition(qid:str='', key:str='', value:str='') -> boo
         if not project_page.exists():
             return True # sitelink meanwhile deleted
     except pwb.exceptions.InvalidTitleError as exception:
-        LOG.warning(value, exception)
+        LOG.warning(f'{value}: {exception}')
         return False
     except pwb.exceptions.UnsupportedPageError as exception:
-        LOG.warning(value, exception)
+        LOG.warning(f'{value}: {exception}')
         return False
 
     try:
@@ -404,7 +404,7 @@ def should_patrol_label_removal(qid:str='', key:str='', value:str='') -> bool:
         if not item_page.exists():
             return False
     except ValueError:
-        LOG.warning(qid, key, value)
+        LOG.warning(f'item page does not exist: {qid}, {key}, {value}')
         return False
 
     if item_page.isRedirectPage():
