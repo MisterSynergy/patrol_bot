@@ -748,21 +748,27 @@ def patrol_sitelink_deletions() -> None:
 def main() -> None:
     SITE.login()
 
-    patrol_reverted_revisions()
-    patrol_revisions_redirected_items()
-    patrol_sitelink_additions()
-    patrol_sitelink_removals()
-    patrol_sitelink_deletions()
-    patrol_label_additions()
-    patrol_label_removals()
-    patrol_label_modifications()
-    patrol_description_additions()
-    patrol_description_removals()
-    patrol_description_modifications()
-    patrol_alias_additions()
-    patrol_alias_removals()
-    patrol_alias_settings()
-    patrol_alias_updates()
+    jobs = {
+        'reverted revisions' : patrol_reverted_revisions,
+        'revisions in redirected items' : patrol_revisions_redirected_items,
+        'sitelink additions' : patrol_sitelink_additions,
+        'sitelink removals' : patrol_sitelink_removals,
+        'sitelink deletions' : patrol_sitelink_deletions,
+        'label additions' : patrol_label_additions,
+        'label removals' : patrol_label_removals,
+        'label modifications' : patrol_label_modifications,
+        'description additions' : patrol_description_additions,
+        'description removals' : patrol_description_removals,
+        'description modifications' : patrol_description_modifications,
+        'alias additions' : patrol_alias_additions,
+        'alias removals' : patrol_alias_removals,
+        'alias settings' : patrol_alias_settings,
+        'alias updates' : patrol_alias_updates,
+    }
+
+    for i, (description, func) in enumerate(jobs.items(), start=1):
+        LOG.info(f'{i:2d}/{len(jobs)}: patrol {description}')
+        func()
 
 
 if __name__=='__main__':
