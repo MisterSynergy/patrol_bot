@@ -197,8 +197,11 @@ def process_revision_subset(action:str, pattern:str, check_function:Callable) ->
                 diff = get_revision_diff(revision_id)
             except RuntimeError:
                 value = None
-            else:
+
+            try:
                 value = scrape_aliases_from_diff(diff)
+            except RuntimeError:  # e.g. empty diff
+                value = None
 
         if check_function(qid=qid, key=key, value=value) is True:
             LOG.info(f'{i}/{len(query_result)}, {qid}, {key}, {value}, {next(SITE.patrol(revid=revision_id))}')  # process generator with one item
