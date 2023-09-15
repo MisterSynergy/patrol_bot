@@ -18,7 +18,7 @@ spec:
         spec:
           containers:
           - name: patrol-bot
-            image: docker-registry.tools.wmflabs.org/toolforge-python39-sssd-base:latest
+            image: docker-registry.tools.wmflabs.org/toolforge-python311-sssd-base:latest
             workingDir: /data/project/msynbot/pywikibot_tasks/patrol_bot
             command: [ venv/bin/python3 ]
             args: [ main.py ]
