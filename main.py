@@ -534,7 +534,7 @@ def should_patrol_description_modification(qid:str='', key:str='', value:str='')
     return False
 
 
-def should_patrol_alias_additions(qid:str='', key:str='', value:dict[str, list[str]]=None) -> bool:
+def should_patrol_alias_additions(qid:str='', key:str='', value:Optional[dict[str, list[str]]]=None) -> bool:
     # True if:
     #* item is a redirect
     #* item has no aliases
@@ -569,7 +569,7 @@ def should_patrol_alias_additions(qid:str='', key:str='', value:dict[str, list[s
     return False
 
 
-def should_patrol_alias_removals(qid:str='', key:str='', value:dict[str, list[str]]=None) -> bool:
+def should_patrol_alias_removals(qid:str='', key:str='', value:Optional[dict[str, list[str]]]=None) -> bool:
     # True if:
     #* item is a redirect
     #* none of the removed aliases is still missing in this language
@@ -602,7 +602,7 @@ def should_patrol_alias_removals(qid:str='', key:str='', value:dict[str, list[st
     return False
 
 
-def should_patrol_alias_modifications(qid:str='', key:str='', value:dict[str, list[str]]=None) -> bool:
+def should_patrol_alias_modifications(qid:str='', key:str='', value:Optional[dict[str, list[str]]]=None) -> bool:
     # True if:
     #* item is a redirect
     #* none of the removed aliases is still missing, and none of the added aliases is still present
@@ -638,7 +638,7 @@ def should_patrol_alias_modifications(qid:str='', key:str='', value:dict[str, li
     return False
 
 
-def should_patrol_sitelink_deletion(qid:str='', key:str='', value:dict=None) -> bool:
+def should_patrol_sitelink_deletion(qid:str='', key:str='', value:Optional[dict]=None) -> bool:
     return True
 
 
