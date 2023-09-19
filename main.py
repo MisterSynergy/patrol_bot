@@ -295,9 +295,9 @@ def should_patrol_sitelink_removal(qid:str='', key:str='', value:str='') -> bool
         connected_sitelink = item_page.sitelinks.get(key)
     except pwb.exceptions.NoUsername:
         return False
-    else:
-        if connected_sitelink is not None and str(connected_sitelink)[2:-2] == value:
-            return True # removed sitelink already present again
+
+    if connected_sitelink is not None and connected_sitelink.title==value:
+        return True # removed sitelink already present again
 
     ## second attempt: check which item is connected to the sitelink
     family, lang = str(pwb.site.APISite.fromDBName(key)).split(':')
@@ -359,13 +359,13 @@ def should_patrol_sitelink_addition(qid:str='', key:str='', value:str='') -> boo
     except pwb.exceptions.NoUsernameError as exception:
         LOG.warning(exception)
         return False
-    else:
-        try:
-            if connected_sitelink is not None and str(connected_sitelink)[2:-2] != value:
-                return True # different sitelink meanwhile present
-        except pwb.exceptions.NoUsernameError as exception:
-            LOG.warning(exception)
-            return False
+
+    try:
+        if connected_sitelink is not None and  connected_sitelink.title!=value:
+            return True # different sitelink meanwhile present
+    except pwb.exceptions.NoUsernameError as exception:
+        LOG.warning(exception)
+        return False
 
     ## second attempt: check which item is connected to the sitelink
     family, lang = str(pwb.site.APISite.fromDBName(key)).split(':')
