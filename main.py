@@ -10,6 +10,7 @@ from typing import Any, Callable, Optional
 from lxml import etree
 import mariadb
 import pywikibot as pwb
+from pywikibot.exceptions import UnknownSiteError, UnknownFamilyError
 import requests
 
 
@@ -62,6 +63,16 @@ def query_mediawiki(query:str, params:Optional[tuple[Any]]=None) -> list[dict[st
         result = db_cursor.fetchall()
 
     return result
+
+
+def get_site_object(dbname:str) -> pwb.site._basesite.BaseSite:
+    try:
+        site = pwb.site.APISite.fromDBName(dbname)
+    except (UnknownFamilyError, UnknownSiteError) as exception:
+        LOG.warn(exception, dbname)
+        raise RuntimeWarning from exception
+
+    return site
 
 
 #### generic patrolling function
@@ -300,9 +311,14 @@ def should_patrol_sitelink_removal(qid:str='', key:str='', value:str='') -> bool
         return True # removed sitelink already present again
 
     ## second attempt: check which item is connected to the sitelink
-    family, lang = str(pwb.site.APISite.fromDBName(key)).split(':')
+    try:
+        site = get_site_object(key)
+    except RuntimeWarning as exception:
+        LOG.warning(f'{key}: {exception}')
+        return False
+
     project_page = pwb.Page(
-        pwb.Site(code=lang, fam=family),
+        site,
         value
     )
 
@@ -368,9 +384,14 @@ def should_patrol_sitelink_addition(qid:str='', key:str='', value:str='') -> boo
         return False
 
     ## second attempt: check which item is connected to the sitelink
-    family, lang = str(pwb.site.APISite.fromDBName(key)).split(':')
+    try:
+        site = get_site_object(key)
+    except RuntimeWarning as exception:
+        LOG.warning(f'{key}: {exception}')
+        return False
+
     project_page = pwb.Page(
-        pwb.Site(code=lang, fam=family),
+        site,
         value
     )
 
